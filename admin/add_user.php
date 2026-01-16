@@ -37,7 +37,7 @@
              background-color: var(--primary-color) !important;
              color: var(--text-color) !important;
              font-weight: 800;
-             border-radius: 10  px 10px 10px 10px;
+             border-radius: 50px 50px 50px 50px;
             
             }
             .btn-kembali:hover{

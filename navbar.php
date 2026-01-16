@@ -52,21 +52,33 @@
             <a class="nav-link" href="<?= base_url('dashboard/dashboard.php');?>">Dashboard Admin</a>
           </li>
           <li class="nav-item">
+            <a class="nav-link" href="<?= base_url('mata_kuliah/list.php');?>">Kelola Mata Kuliah</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="<?= base_url('tugas/list.php');?>">Lihat Tugas</a>
+          </li>
+          <li class="nav-item">
             <a class="nav-link" href="<?= base_url('admin/kelola_user.php');?>">Kelola Pengguna</a>
           </li>
         <?php elseif ($role === 'dosen'): ?>
           <li class="nav-item">
-            <a class="nav-link" href="dosen/tugas.php">Tugas Saya</a>
+            <a class="nav-link" href="<?= base_url('dashboard/dashboard.php');?>">Dashboard Dosen</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="dosen/input_nilai.php">Input Nilai</a>
+            <a class="nav-link" href="<?= base_url('tugas/list.php');?>">Tugas Saya</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="<?= base_url('nilai/dosen_nilai_tugas.php');?>">Input Nilai</a>
           </li>
         <?php elseif ($role === 'mahasiswa'): ?>
           <li class="nav-item">
-            <a class="nav-link" href="mahasiswa/tugas.php">Tugas</a>
+            <a class="nav-link" href="<?= base_url('dashboard/dashboard.php');?>">Dashboard</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="<?= base_url('mahasiswa/nilai.php');?>">Nilai</a>
+            <a class="nav-link" href="<?= base_url('tugas_mahasiswa/lihat_tugas.php');?>">Tugas</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="<?= base_url('tugas_mahasiswa/riwayat_nilai.php');?>">Nilai</a>
           </li>
         <?php endif; ?>
       </ul>

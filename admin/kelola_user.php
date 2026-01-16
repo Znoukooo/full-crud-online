@@ -11,9 +11,22 @@ if (!isset($_SESSION['role'])) {
 $role = $_SESSION['role'];
 $user = $_SESSION['nama_lengkap'];
 
-// Ambil data pengguna dari database
-$query = mysqli_query($koneksi, "SELECT id, username, role, nama_lengkap, email FROM users ORDER BY nama_lengkap, role ASC");
-$pengguna = mysqli_fetch_all($query, MYSQLI_ASSOC);
+$default_limit = 5;
+$current_limit = isset($_GET['limit']) ? (int)$_GET['limit'] : $default_limit;
+
+$search_keyword = isset($_GET['search']) ? mysqli_real_escape_string($koneksi, $_GET['search']) : '';
+$search_query_sql = "";
+
+if (!empty($search_keyword)) {
+    $search_query_sql = " WHERE nama_lengkap LIKE '%$search_keyword%' OR username LIKE '%$search_keyword%' OR role LIKE '%$search_keyword%'";
+}
+
+$totalUsersQuery = mysqli_query($koneksi, "SELECT COUNT(*) AS total FROM users" . $search_query_sql);
+$totalUsersResult = mysqli_fetch_assoc($totalUsersQuery);
+$total_users = $totalUsersResult['total'];
+
+$queryUsers = mysqli_query($koneksi, "SELECT id, username, role, nama_lengkap, email FROM users" . $search_query_sql . " ORDER BY nama_lengkap, role ASC LIMIT " . $current_limit);
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -23,108 +36,186 @@ $pengguna = mysqli_fetch_all($query, MYSQLI_ASSOC);
   <title>Kelola User - Admin</title>
   <link rel="stylesheet" href="<?= base_url('bootstrap/css/bootstrap.min.css') ?>">
   <style>
-    .btn-tambah{
-        background-color: var(--primary-color) !important;
-        color: var(--text-color) !important;
-        font-weight: 800;
-       border-radius: 50px 50px 50px 50px !important;
+      .header-section {
+            background-color: var(--primary-color);
+            color: var(--text-color);
+            padding: 20px;
+            margin-bottom: 30px;
+            border-radius: 15px;
+            text-align: center;
+        }
+        .header-section h2 {
+            color: var(--text-color);
+        }
 
-    }
-    .btn-tambah:hover{
-        background-color: rgb(64, 51, 133) !important;
-        color: var(--text-color) !important;
-        font-weight: 800;
-        border-radius: 50px 50px 50px 50px !important;
-    }
-    .title{
-        color: var(--black-text);
-    }
-    .line{
-        width: 100%;
-        height: 2px;
-        background-color: var(--primary-color) !important;
-    }
-    .form-control:hover,
-    .form-control:focus,
-    .form-select:hover,
-    .form-select:focus{
-      box-shadow: 0 0 10px var(--primary-color) !important;
-      transition: 0.5s;
-     
-    }
-    .form-select option:checked{
-        background-color: var(--secondary) !important;
-        color: var(--black-text) !important;
-    }
-    .table thead tr th{
-      background-color: var(--primary-color) !important;
-      color: var(--text-color);
-    }
-    .aksi{
-        color: var(--text-color) !important;
-      
-    }
+        .table-container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .table-custom {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        .table-custom thead th {
+            background-color: var(--primary-color);
+            color: var(--text-color);
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 2px solid var(--dark-purple-hover);
+        }
+
+        .table-custom tbody tr {
+            border-bottom: 1px solid #ddd;
+        }
+
+        .table-custom tbody tr:nth-of-type(even) {
+            background-color: #f9f9f9;
+        }
+
+        .table-custom tbody tr:hover {
+            background-color: #f1f1f1;
+        }
+
+        .table-custom tbody td {
+            padding: 12px 15px;
+            vertical-align: middle;
+        }
+
+        .action-btn {
+            background-color: var(--primary-color) !important;
+            color: var(--text-color) !important;
+            font-weight: 600 !important;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 50px;
+            transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+            text-decoration: none;
+            display: inline-block;
+            margin: 2px;
+        }
+        .action-btn:hover {
+            background-color: var(--dark-purple-hover) !important;
+            color: white !important;
+        }
+        .action-btn-tambah {
+            background-color: var(--text-color) !important;
+            color: var(--primary-color) !important;
+            font-weight: 600 !important;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 50px;
+            transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+            text-decoration: none;
+            display: inline-block;
+            margin: 2px;
+        }
+        .action-btn-tambah:hover {
+            background-color: var(--dark-purple-hover) !important;
+            color: white !important;
+        }
+        .btn-danger {
+            background-color: #dc3545 !important;
+            color: white !important;
+            font-weight: 600 !important;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 50px;
+            transition: background-color 0.2s ease-in-out;
+            text-decoration: none;
+            display: inline-block;
+            margin: 2px;
+        }
+        .btn-danger:hover {
+            background-color: #c82333 !important;
+        }
+
+        .search-form {
+            margin-bottom: 20px;
+        }
+        .pagination-container {
+            text-align: center;
+            margin-top: 20px;
+        }
   </style>
 </head>
 <body>
 <?php include "../navbar.php"; ?>
 
 <div class="container mt-4">
-  <h2 class="mb-3 title">Kelola Pengguna</h2>
-  <div class="col-lg-5 col-8 line my-3"></div>
-  <div class="button col-5 col-lg-2">
-    <a href="<?= base_url('admin/add_user.php');?>" class="btn btn-tambah my-3 p-2 py-2 px-2 d-flex justify-content-center align-items-center gap-2">
-  <ion-icon name="add-outline" size="small"></ion-icon>
-  <span class="fw-bold">Tambah Pengguna</span>
-</a>
+    <div class="header-section">
+        <h2>Kelola Pengguna</h2>
+        <p>Kelola semua akun pengguna sistem.</p>
+        <?php if ($role === 'admin'): ?>
+            <a href="<?= base_url('admin/add_user.php') ?>" class="btn action-btn-tambah mt-3">Tambah Pengguna Baru</a>
+        <?php endif; ?>
+    </div>
 
-  </div>
-  <div class="row mb-3">
-  
-    <div class="col-4">
-      <input type="text" id="searchName" class="form-control custom-input" placeholder="Cari berdasarkan Nama">
-    </div>
-    <div class="col-4">
-      <input type="text" id="searchUsername" class="form-control custom-input" placeholder="Cari berdasarkan Username">
-    </div>
-    <div class="col-4">
-      <select class="form-select custom-input" id="filterRole">
-        <option value="">Semua Role</option>
-        <option value="admin">Admin</option>
-        <option value="dosen">Dosen</option>
-        <option value="mahasiswa">Mahasiswa</option>
-      </select>
-    </div>
-  </div>
+    <div class="table-container">
+        <form class="search-form d-flex mb-3" method="GET" action="">
+            <input class="form-control me-2" type="search" placeholder="Cari Nama, Username, atau Role..." aria-label="Search" name="search" value="<?= htmlspecialchars($search_keyword); ?>">
+            <button class="btn action-btn" type="submit">Cari</button>
+            <?php if (!empty($search_keyword)): ?>
+                <a href="<?= base_url('admin/list_users.php') ?>" class="btn btn-secondary ms-2">Reset</a>
+            <?php endif; ?>
+        </form>
 
-  <table class="table table-bordered" id="userTable">
-    <thead class="text-center">
-      <tr>
-        <th>No</th>
-        <th>Nama Lengkap</th>
-        <th>Username</th>
-        <th>Role</th>
-        <th>Aksi</th>
-      </tr>
-    </thead>
-    <tbody>
-      <?php $no = 1; foreach ($pengguna as $row): ?>
-      <tr>
-        <td><?= $no++ ?></td>
-        <td class="nama"><?= htmlspecialchars($row['nama_lengkap']) ?></td>
-        <td class="username"><?= htmlspecialchars($row['username']) ?></td>
-        <td class="role"><?= htmlspecialchars($row['role']) ?></td>
-        <td>
-          <div class="d-flex gap-2 justify-content-center">
-          <a href="<?= base_url('admin/edit_user.php?id=' . $row['id']); ?>" class="btn btn-warning aksi">Edit</a>
-          <a href="<?= base_url('admin/delete_user.php?id=' . $row['id']);?>" class="btn btn-danger aksi" onclick="return confirmSubmit();">Delete</a>
-          </div>
-      </td>
-      </tr>
-      <?php endforeach; ?>
-    </tbody>
-  </table>
+        <?php if (mysqli_num_rows($queryUsers) > 0): ?>
+            <div class="table-responsive">
+                <table class="table table-custom">
+                    <thead>
+                        <tr>
+                            <th>No</th>
+                            <th>Nama Lengkap</th>
+                            <th>Username</th>
+                            <th>Role</th>
+                            <th>Email</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php $no = 1; ?>
+                        <?php while($user_data = mysqli_fetch_assoc($queryUsers)): ?>
+                            <tr>
+                                <td><?= $no++; ?></td>
+                                <td><?= htmlspecialchars($user_data['nama_lengkap']); ?></td>
+                                <td><?= htmlspecialchars($user_data['username']); ?></td>
+                                <td><?= htmlspecialchars($user_data['role']); ?></td>
+                                <td><?= htmlspecialchars($user_data['email']); ?></td>
+                                <td>
+                                    <?php if ($role === 'admin'): ?>
+                                        <a href="<?= base_url('admin/edit_user.php?id=' . $user_data['id']) ?>" class="btn action-btn">Edit</a>
+                                        <a href="<?= base_url('admin/delete_user.php?id=' . $user_data['id']) ?>" class="btn btn-danger" onclick="return confirm('Yakin ingin menghapus pengguna ini?');">Hapus</a>
+                                    <?php endif; ?>
+                                </td>
+                            </tr>
+                        <?php endwhile; ?>
+                    </tbody>
+                </table>
+            </div>
+
+            <?php if ($current_limit < $total_users): ?>
+                <div class="pagination-container">
+                    <a href="?limit=<?= $current_limit + $default_limit ?><?= !empty($search_keyword) ? '&search=' . urlencode($search_keyword) : '' ?>" class="btn action-btn">Tampilkan Lebih Banyak</a>
+                </div>
+            <?php elseif ($total_users > 0): ?>
+                <div class="alert alert-secondary text-center mt-3" role="alert">
+                    Semua pengguna telah ditampilkan.
+                </div>
+            <?php endif; ?>
+
+        <?php else: ?>
+            <div class="alert alert-info text-center" role="alert">
+                Tidak ada pengguna yang ditemukan.
+            </div>
+        <?php endif; ?>
+    </div>
 </div>
+
 
 <script>
   const searchName = document.getElementById("searchName");

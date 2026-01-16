@@ -23,6 +23,7 @@
       --light-blue: #ADD8E6; 
       --dark-blue: #4682B4; 
     --black-text: #3d3b41;
+    --dark-purple-hover: #403385;   
 }
 
 *{
